@@ -42,7 +42,7 @@ export default function LandingPage() {
             Ciptakan Masa Depan <span className="text-primary italic">Digital</span> Anda.
           </h2>
           <p className="text-lg text-gray-600 max-w-lg">
-            SMK Prima Unggul adalah pusat keunggulan pendidikan vokasi di Tangerang Selatan yang berfokus pada teknologi, bisnis, dan industri kreatif.
+            SMK Prima Unggul adalah pusat keunggulan pendidikan vokasi di Kota Tangerang yang berfokus pada teknologi, bisnis, dan industri kreatif.
           </p>
           <div className="flex flex-wrap gap-4 pt-4">
             <button onClick={() => navigate('/login')} className="btn-primary px-10 py-4 text-lg">Mulai Sekarang</button>
@@ -75,7 +75,7 @@ export default function LandingPage() {
              { icon: GraduationCap, label: 'Alumni', val: '5.2k+' },
              { icon: BookOpen, label: 'Materi', val: '320+' },
              { icon: Clock, label: 'Pengalaman', val: '15 Thn' },
-             { icon: MapPin, label: 'Lokasi', val: 'Tangsel' },
+             { icon: MapPin, label: 'Lokasi', val: 'Kota TNG' },
           ].map((stat, i) => (
             <div key={i} className="text-center space-y-2">
               <div className="w-12 h-12 bg-white rounded-2xl shadow-sm mx-auto flex items-center justify-center text-primary">
@@ -120,7 +120,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">SP</div>
             <span className="font-bold">SMK Prima Unggul</span>
           </div>
-          <p className="text-gray-400 text-sm">© 2026 SMK Prima Unggul Tangerang Selatan. All rights reserved.</p>
+          <p className="text-gray-400 text-sm">© 2026 SMK Prima Unggul Kota Tangerang. All rights reserved.</p>
         </div>
       </footer>
     </div>

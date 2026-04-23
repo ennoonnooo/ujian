@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDB } from '../../App';
-import { EXAM_QUESTIONS, KKM_VALUE } from '../../constants';
-import { Question } from '../../types';
+import { EXAM_QUESTIONS, KKM_VALUE, MAJORS } from '../../constants';
+import { Question, Major } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, 
@@ -17,15 +17,39 @@ import {
 } from 'lucide-react';
 
 export default function UjianOnline() {
-  const { currentUser, submitExam, examResults } = useDB();
+  const { currentUser, submitExam, examResults, attendance } = useDB();
   const [examStarted, setExamStarted] = useState(false);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes
   const [isFinished, setIsFinished] = useState(false);
+  const [adminSelectedMajor, setAdminSelectedMajor] = useState<Major | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'EASY' | 'HARD' | 'MIXED'>('MIXED');
 
-  const major = currentUser?.major || 'TKJ';
-  const questions = EXAM_QUESTIONS[major];
+  const major = (currentUser?.role === 'ADMIN' ? adminSelectedMajor : currentUser?.major) || 'TKJ';
+  
+  // Check if student has "HADIR" attendance for today and was on time (before 08:30)
+  const today = new Date().toISOString().split('T')[0];
+  const attendanceRecord = attendance.find(a => 
+    a.studentId === currentUser?.id && 
+    a.date === today && 
+    a.status === 'HADIR'
+  );
+
+  const checkInTime = attendanceRecord ? new Date(attendanceRecord.checkIn) : null;
+  const isLate = checkInTime ? (checkInTime.getHours() >= 8) : false;
+  
+  // Exam Window Check (07:00 - 12:00)
+  const now = new Date();
+  const currentHour = now.getHours();
+  const isWithinExamWindow = currentHour >= 7 && currentHour < 12;
+  
+  const canTakeExam = attendanceRecord && !isLate && isWithinExamWindow;
+
+  // Filter questions based on selected difficulty
+  const questions = EXAM_QUESTIONS[major as Major].filter(q => 
+    selectedDifficulty === 'MIXED' || q.difficulty === selectedDifficulty
+  );
 
   // Check if already taken
   const pastResult = examResults.find(r => r.studentId === currentUser?.id && r.major === major);
@@ -53,7 +77,8 @@ export default function UjianOnline() {
       major: major,
       score: Math.round(score),
       date: new Date().toISOString(),
-      answers: questions.map(q => userAnswers[q.id] ?? -1)
+      answers: questions.map(q => userAnswers[q.id] ?? -1),
+      difficulty: selectedDifficulty
     });
     setIsFinished(true);
     setExamStarted(false);
@@ -117,8 +142,45 @@ export default function UjianOnline() {
             <h2 className="text-4xl font-black text-gray-900">Ujian Kompetensi Keahlian</h2>
             <div className="flex items-center gap-2 text-primary font-bold">
               <CheckCircle2 size={20} />
-              <span className="uppercase tracking-widest text-sm">Jurusan {major}</span>
+              <span className="uppercase tracking-widest text-sm">
+                {currentUser?.role === 'ADMIN' ? 'Preview Mode (Admin)' : `Jurusan ${major}`}
+              </span>
             </div>
+          </div>
+
+          {currentUser?.role === 'ADMIN' && (
+            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-3">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Pilih Jurusan Untuk Simulasi:</label>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(MAJORS) as Major[]).map(m => (
+                  <button 
+                    key={m}
+                    onClick={() => setAdminSelectedMajor(m)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${adminSelectedMajor === m ? 'bg-primary text-white shadow-lg' : 'bg-white border border-gray-100 text-gray-500'}`}
+                  >
+                    {MAJORS[m].name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-3">
+            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Pilih Tingkat Kesulitan:</label>
+            <div className="flex gap-4">
+              {(['MIXED', 'EASY', 'HARD'] as const).map(d => (
+                <button 
+                  key={d}
+                  onClick={() => setSelectedDifficulty(d)}
+                  className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${selectedDifficulty === d ? 'bg-primary text-white shadow-lg' : 'bg-white border border-gray-100 text-gray-400'}`}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-400 font-medium px-1">
+              {selectedDifficulty === 'MIXED' ? 'Menggabungkan semua tingkat soal.' : `Hanya menampilkan soal kategori ${selectedDifficulty}.`}
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 py-8 border-y border-gray-100">
@@ -143,9 +205,44 @@ export default function UjianOnline() {
             <p className="text-sm font-medium">Pastikan koneksi internet stabil. Ujian hanya dapat dilakukan satu kali. Menutup halaman akan mengakhiri ujian secara otomatis.</p>
           </div>
 
-          <button onClick={() => setExamStarted(true)} className="btn-primary w-full py-5 text-xl flex items-center justify-center gap-3">
-            Mulai Ujian Sekarang <Play size={24} fill="currentColor" />
-          </button>
+          <div className={`p-6 rounded-2xl border flex items-center justify-between ${isWithinExamWindow ? 'bg-green-50 border-green-100 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+            <div className="flex items-center gap-3 font-bold">
+              <Clock size={20} />
+              <span>Sesi Ujian: 07:00 - 12:00 WIB</span>
+            </div>
+            <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isWithinExamWindow ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+              {isWithinExamWindow ? 'Sedang Berlangsung' : 'Sesi Ditutup'}
+            </span>
+          </div>
+
+          {currentUser?.role === 'SISWA' && !canTakeExam ? (
+            <div className="p-8 bg-red-50 border border-red-100 rounded-3xl text-center space-y-4">
+               <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full mx-auto flex items-center justify-center">
+                  <AlertCircle size={32} />
+               </div>
+               <div className="space-y-1">
+                  <h4 className="text-xl font-black text-red-600">
+                    {!isWithinExamWindow ? 'Sesi Ujian Berakhir/Belum Dibuka' : (!attendanceRecord ? 'Absensi Belum Tercatat' : 'Keterlambatan Terdeteksi')}
+                  </h4>
+                  <p className="text-sm text-red-400 font-medium whitespace-pre-line">
+                    {!isWithinExamWindow 
+                      ? `Ujian hanya dapat diakses antara pukul 07:00 s/d 12:00 WIB.\nSilakan kembali di waktu yang telah ditentukan.`
+                      : (!attendanceRecord 
+                          ? `Anda belum ditandai hadir hari ini (${new Date().toLocaleDateString('id-ID')}).\nSilakan hubungi Guru Pengawas.`
+                          : `Anda tercatat hadir pukul ${new Date(attendanceRecord.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}\nBatas toleransi kehadiran untuk ujian adalah pukul 08:00.\nAnda tidak diperkenankan mengikuti ujian karena terlambat.`
+                        )
+                    }
+                  </p>
+               </div>
+               <div className="p-4 bg-white/50 rounded-xl border border-red-50 inline-block px-8 py-2">
+                  <span className="text-[10px] font-black text-red-300 uppercase tracking-widest">Status Akses: Restricted</span>
+               </div>
+            </div>
+          ) : (
+            <button onClick={() => setExamStarted(true)} className="btn-primary w-full py-5 text-xl flex items-center justify-center gap-3">
+              Mulai Ujian Sekarang <Play size={24} fill="currentColor" />
+            </button>
+          )}
         </div>
       </div>
     );

@@ -91,7 +91,7 @@ export default function Dashboard() {
           <div className="relative z-10 space-y-4">
             <h3 className="text-2xl font-bold">Informasi Sekolah</h3>
             <p className="opacity-90 leading-relaxed font-medium">
-              Selamat datang di sistem manajemen pendidikan SMK Prima Unggul. Pastikan semua data yang dimasukkan sudah sesuai dengan jadwal pelajaran Tangerang Selatan.
+              Selamat datang di sistem manajemen pendidikan SMK Prima Unggul. Pastikan semua data yang dimasukkan sudah sesuai dengan jadwal pelajaran Kota Tangerang.
             </p>
             <button className="bg-white text-primary px-8 py-3 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">
               Lihat Pengumuman

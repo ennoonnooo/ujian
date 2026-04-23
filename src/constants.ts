@@ -41,4 +41,4 @@ export const EXAM_QUESTIONS: Record<Major, Question[]> = {
 };
 
 export const KKM_VALUE = 50;
-export const LOCATION_CITY = "Tangerang Selatan";
+export const LOCATION_CITY = "Kota Tangerang";

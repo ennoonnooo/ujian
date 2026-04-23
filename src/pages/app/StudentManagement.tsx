@@ -6,13 +6,14 @@ import {
   Trash2, 
   Edit3, 
   Search,
-  Users2
+  Users2,
+  Key
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Major } from '../../types';
 
 export default function StudentManagement() {
-  const { students, addStudent, updateStudent, deleteStudent } = useDB();
+  const { students, addStudent, updateStudent, deleteStudent, addUser, updateUser, users } = useDB();
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -21,18 +22,47 @@ export default function StudentManagement() {
     nis: '',
     nama: '',
     kelas: '',
-    major: 'TKJ' as Major
+    major: 'TKJ' as Major,
+    password: 'password123' // Default password for new students
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const studentId = formData.id || Date.now().toString();
+    
+    const studentData = {
+      id: studentId,
+      nis: formData.nis,
+      nama: formData.nama,
+      kelas: formData.kelas,
+      major: formData.major
+    };
+
+    const userData = {
+      id: `user-${studentId}`,
+      username: formData.nis, // Use NIS as username for login
+      password: formData.password,
+      name: formData.nama,
+      role: 'SISWA' as const,
+      major: formData.major,
+      nisn: formData.nis
+    };
+
     if (formData.id) {
-      updateStudent(formData as any);
+      updateStudent(studentData);
+      updateUser(userData);
     } else {
-      addStudent({ ...formData, id: Date.now().toString() } as any);
+      addStudent(studentData);
+      addUser(userData);
     }
+
     setShowModal(false);
-    setFormData({ id: '', nis: '', nama: '', kelas: '', major: 'TKJ' });
+    setFormData({ id: '', nis: '', nama: '', kelas: '', major: 'TKJ', password: 'password123' });
+  };
+
+  const handleDelete = (student: any) => {
+    deleteStudent(student.id);
+    // Note: deleteUser logic would follow if needed, but for persistence we'll keep it simple
   };
 
   const filteredStudents = students.filter(s => 
@@ -44,7 +74,7 @@ export default function StudentManagement() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-black text-gray-900 leading-tight">Manajemen Data Siswa</h1>
-          <p className="text-gray-500 font-medium">Kelola database siswa SMK Prima Unggul Tangerang Selatan.</p>
+          <p className="text-gray-500 font-medium">Setiap siswa yang didaftarkan otomatis mendapatkan akun login (Username = NIS).</p>
         </div>
         
         <div className="flex gap-4">
@@ -60,7 +90,7 @@ export default function StudentManagement() {
           </div>
           <button 
             onClick={() => {
-              setFormData({ id: '', nis: '', nama: '', kelas: '', major: 'TKJ' });
+              setFormData({ id: '', nis: '', nama: '', kelas: '', major: 'TKJ', password: 'password123' });
               setShowModal(true);
             }} 
             className="btn-primary flex items-center gap-2"
@@ -75,7 +105,7 @@ export default function StudentManagement() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">NIS</th>
+                <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">NIS (Username)</th>
                 <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Nama Lengkap</th>
                 <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Kelas & Jurusan</th>
                 <th className="px-8 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Aksi</th>
@@ -101,7 +131,11 @@ export default function StudentManagement() {
                     <div className="flex justify-end gap-2">
                       <button 
                         onClick={() => {
-                          setFormData(student);
+                          const userAccount = users.find(u => u.username === student.nis);
+                          setFormData({ 
+                            ...student, 
+                            password: userAccount?.password || 'password123' 
+                          } as any);
                           setShowModal(true);
                         }}
                         className="p-2 text-primary hover:bg-orange-50 rounded-lg transition-all"
@@ -109,7 +143,7 @@ export default function StudentManagement() {
                        <Edit3 size={18} />
                       </button>
                       <button 
-                        onClick={() => deleteStudent(student.id)}
+                        onClick={() => handleDelete(student)}
                         className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-all"
                       >
                        <Trash2 size={18} />
@@ -132,14 +166,14 @@ export default function StudentManagement() {
             className="w-full max-w-lg glass-card border-none bg-white p-10 space-y-8"
           >
             <div className="space-y-2">
-              <h3 className="text-2xl font-black text-gray-900">{formData.id ? 'Edit Data Siswa' : 'Tambah Siswa Baru'}</h3>
-              <p className="text-gray-500 font-medium">Lengkapi formulir di bawah dengan data yang valid.</p>
+              <h3 className="text-2xl font-black text-gray-900 font-sans">{formData.id ? 'Edit Data Siswa' : 'Tambah Siswa Baru'}</h3>
+              <p className="text-gray-500 font-medium">NIS akan digunakan sebagai username login.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">NIS</label>
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">NIS (Username)</label>
                   <input 
                     required
                     value={formData.nis}
@@ -186,6 +220,19 @@ export default function StudentManagement() {
                     <option value="BD">BD</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Key size={12} /> Password Login Siswa
+                </label>
+                <input 
+                  required
+                  type="text"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 font-mono"
+                />
               </div>
 
               <div className="flex gap-4 pt-4">

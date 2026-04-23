@@ -46,4 +46,5 @@ export interface ExamResult {
   score: number;
   date: string;
   answers: number[];
+  difficulty: 'EASY' | 'HARD' | 'MIXED';
 }

@@ -10,7 +10,8 @@ import {
   LogOut, 
   GraduationCap, 
   FileText,
-  UserCircle
+  UserCircle,
+  Trophy
 } from 'lucide-react';
 
 export default function AppLayout() {
@@ -26,7 +27,8 @@ export default function AppLayout() {
     { label: 'Dashboard', path: '/app', icon: LayoutDashboard, roles: ['ADMIN', 'GURU', 'STAFF', 'SISWA'] },
     { label: 'Absensi Mandiri', path: '/app/absensi-karyawan', icon: UserCheck, roles: ['ADMIN', 'GURU', 'STAFF'] },
     { label: 'Absensi Siswa', path: '/app/absensi-siswa', icon: ClipboardList, roles: ['ADMIN', 'GURU'] },
-    { label: 'Ujian Online', path: '/app/ujian', icon: FileText, roles: ['SISWA'] },
+    { label: 'Hasil Ujian', path: '/app/results', icon: Trophy, roles: ['ADMIN', 'GURU'] },
+    { label: 'Ujian Online', path: '/app/ujian', icon: FileText, roles: ['SISWA', 'ADMIN'] },
     { label: 'Rekap Absensi', path: '/app/rekap', icon: ClipboardList, roles: ['ADMIN', 'GURU'] },
     { label: 'Data Siswa', path: '/app/students', icon: GraduationCap, roles: ['ADMIN'] },
     { label: 'User Management', path: '/app/users', icon: Settings, roles: ['ADMIN'] },
@@ -95,7 +97,7 @@ export default function AppLayout() {
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex flex-col items-end mr-4">
               <p className="text-sm font-bold text-gray-900">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-              <p className="text-xs text-gray-400 font-medium tracking-wide">Tangerang Selatan, ID</p>
+              <p className="text-xs text-gray-400 font-medium tracking-wide">Kota Tangerang, ID</p>
             </div>
             <button 
               onClick={handleLogout}

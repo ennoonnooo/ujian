@@ -22,30 +22,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // For Demo: If user is SISWA and doesn't exist, auto-create them
-      if (role === 'SISWA') {
-        const studentUser: User = {
-          id: Date.now().toString(),
-          username: username,
-          name: `Siswa ${username}`,
-          role: 'SISWA',
-          major: 'TKJ', // Default
-          nisn: username
-        };
-        await login(username); // Try login
-        // If fail, we won't auto-create here for production, but for user request "bikin akun siswa", 
-        // normally admin does it. Let's assume some exist or admin created them.
-      }
-
-      const success = await login(username, role === 'STAFF' ? password : '');
+      // Pass the current role toggle to ensure correct login type
+      const success = await login(username, password, role);
       
       if (success) {
         navigate('/app');
       } else {
-        setError('Username atau Password salah.');
+        setError(`Login Gagal. Pastikan Username, Password, dan Tipe Akun (${role === 'STAFF' ? 'Guru/Staff' : 'Siswa'}) sudah benar.`);
       }
     } catch (err) {
-      setError('Terjadi kesalahan koneksi.');
+      setError('Terjadi kesalahan koneksi sistem.');
     } finally {
       setLoading(false);
     }
@@ -101,22 +87,20 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {role === 'STAFF' && (
-              <div className="space-y-2">
-                <label className="text-xs font-black text-gray-500 uppercase tracking-widest pl-1">Kata Sandi</label>
-                <div className="relative group">
-                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
-                  <input 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black text-gray-500 uppercase tracking-widest pl-1">Kata Sandi</label>
+              <div className="relative group">
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
+                  placeholder="••••••••"
+                  required
+                />
               </div>
-            )}
+            </div>
 
             {error && (
               <motion.p 
@@ -138,9 +122,20 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-gray-400 text-xs font-medium">
-            &copy; 2026 {LOCATION_CITY} • SP Digital Team
-          </p>
+          <div className="mt-8 pt-8 border-t border-gray-100 space-y-4">
+            <p className="text-center text-gray-400 text-xs font-medium">
+              &copy; 2026 {LOCATION_CITY} • SP Digital Team
+            </p>
+            <button 
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="w-full py-2 text-[10px] font-black text-gray-300 hover:text-primary uppercase tracking-widest transition-colors"
+            >
+              Reset Data Sistem (Klik jika login error)
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
